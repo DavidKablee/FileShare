@@ -30,7 +30,6 @@
     "react-native-svg": "^15.14.0",
     "react-native-vector-icons": "^10.3.0",
     "react-native-video": "^6.17.0",
-    "react-native-video-thumbnail": "github:mbloody/react-native-video-thumbnail",
     "react-native-worklets": "^0.6.1"
   },
   "devDependencies": {

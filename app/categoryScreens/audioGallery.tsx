@@ -182,7 +182,7 @@ export default function AudioGallery() {
             </TouchableOpacity>
 
             {selectionMode && (
-                <View style={{flexDirection:'row',alignItems:'center',padding:10,backgroundColor:'#1a1333'}}>
+                <View style={{flexDirection:'row',alignItems:'center',padding:10, marginTop: -80, marginBottom: 60, backgroundColor:'#1a1333'}}>
                     <Text style={{color:'#fff',fontWeight:'bold',marginRight:16}}>{Object.values(selected).filter(Boolean).length} selected</Text>
                     <TouchableOpacity onPress={() => { setSelectionMode(false); setSelected({}); }} style={{marginRight:12}}>
                         <Text style={{color:'#bbb'}}>Cancel</Text>

@@ -164,7 +164,7 @@ export default function DocumentsGallery() {
 
   const renderItem = ({ item }: { item: DocItem }) => {
     const isSelected = selected[item.path] || false;
-    
+
     return (
       <TouchableOpacity
         style={styles.thumbWrap}
@@ -260,18 +260,10 @@ export default function DocumentsGallery() {
       </TouchableOpacity>
 
       {selectionMode && (
-        <View style={styles.selectionHeader}>
-          <Text style={styles.selectionText}>
-            {Object.keys(selected).length} selected
-          </Text>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => {
-              setSelectionMode(false);
-              setSelected({});
-            }}
-          >
-            <Text style={styles.actionButtonText}>Cancel</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10, backgroundColor: '#1a1333' }}>
+          <Text style={{ color: '#fff', fontWeight: 'bold', marginRight: 16 }}>{Object.values(selected).filter(Boolean).length} selected</Text>
+          <TouchableOpacity onPress={() => { setSelectionMode(false); setSelected({}); }} style={{ marginRight: 12 }}>
+            <Text style={{ color: '#bbb' }}>Cancel</Text>
           </TouchableOpacity>
         </View>
       )}

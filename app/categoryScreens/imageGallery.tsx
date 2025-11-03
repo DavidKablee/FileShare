@@ -2,13 +2,11 @@ import { openDeviceSettings, requestStoragePermissions } from '../../utils/permi
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
-// react-native-fs may not be available during development; require guarded at runtime
 import * as safeRfs from '../utils/safeRfs';
 import Entypo from 'react-native-vector-icons/Entypo';
 
 type GalleryItem = { path: string; name: string };
 
-// Module-level cache: scan directories only once per app session.
 let imagesCache: GalleryItem[] = [];
 
 
@@ -78,11 +76,10 @@ function ImageGallery() {
           } catch (e) {
             continue;
           }
-          await collectImagesRecursively(root, collected, 3, 800); // depth 3, cap 800 files
+          await collectImagesRecursively(root, collected, 3, 800);
           if (collected.length >= 800) break;
         }
         if (!isMounted) return;
-        // cache results for subsequent openings during this app session
         imagesCache = collected;
         setImages(collected);
       } catch (e: any) {

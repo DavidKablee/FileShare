@@ -65,7 +65,7 @@ export default function VideoGallery() {
   const [error, setError] = useState<string | null>(null);
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
-  const [selected, setSelected] = useState<{[path: string]: boolean}>({});
+  const [selected, setSelected] = useState<{ [path: string]: boolean }>({});
   const roots = Platform.OS === 'android' ? ANDROID_VIDEO_DIRS : IOS_VIDEO_DIRS_PLACEHOLDER;
   const navigation = useNavigation();
   const route = useRoute();
@@ -80,8 +80,8 @@ export default function VideoGallery() {
     let isMounted = true;
     const loadVideos = async () => {
       try {
-  if (videosCache.length === 0) setLoading(true);
-  setError(null);
+        if (videosCache.length === 0) setLoading(true);
+        setError(null);
         const hasPermission = await requestStoragePermissions();
         if (!hasPermission) {
           if (isMounted) setError('Storage permission denied. Please grant access to view videos.');
@@ -110,7 +110,7 @@ export default function VideoGallery() {
           await collectVideosRecursively(root, collected, 3, 100);
           if (collected.length >= 100) break;
         }
-          for (const vid of collected) vid.thumbnail = null;
+        for (const vid of collected) vid.thumbnail = null;
         if (isMounted) {
           videosCache = collected;
           videosScannedOnce = true;
@@ -120,7 +120,7 @@ export default function VideoGallery() {
         console.error('Error loading videos:', err);
         if (isMounted) setError('Failed to load videos. Please try again.');
       } finally {
-  if (isMounted) setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     loadVideos();
@@ -137,7 +137,7 @@ export default function VideoGallery() {
   ) => {
     if (out.length >= cap || depth < 0) return;
     try {
-  const items = await safeRfs.readDir(dir);
+      const items = await safeRfs.readDir(dir);
       for (const item of items) {
         if (out.length >= cap) break;
         if (item.isDirectory()) {
@@ -192,9 +192,9 @@ export default function VideoGallery() {
       };
 
       return (
-        <TouchableOpacity 
-          style={[styles.videoContainer, isSelected && { borderWidth: 3, borderColor: '#7d64ca' }]} 
-          onPress={onPress} 
+        <TouchableOpacity
+          style={[styles.videoContainer, isSelected && { borderWidth: 3, borderColor: '#7d64ca' }]}
+          onPress={onPress}
           activeOpacity={0.8}
           onLongPress={onLongPress}
         >
@@ -232,22 +232,22 @@ export default function VideoGallery() {
                 />
               )}
             </View>
-              ) : (
-              <View style={styles.thumbnailContainer}>
-                <View style={[styles.thumbnailImage, { backgroundColor: '#10121a', justifyContent: 'center', alignItems: 'center' }]}>
-                  <View style={{ width: '85%', height: '60%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 6 }} />
-                </View>
-                <View style={styles.playOverlay}>
-                  <Entypo name="controller-play" size={28} color="white" />
-                </View>
-                <Text style={styles.videoName} numberOfLines={1}>
-                  {item.name}
-                </Text>
+          ) : (
+            <View style={styles.thumbnailContainer}>
+              <View style={[styles.thumbnailImage, { backgroundColor: '#10121a', justifyContent: 'center', alignItems: 'center' }]}>
+                <View style={{ width: '85%', height: '60%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 6 }} />
               </View>
+              <View style={styles.playOverlay}>
+                <Entypo name="controller-play" size={28} color="white" />
+              </View>
+              <Text style={styles.videoName} numberOfLines={1}>
+                {item.name}
+              </Text>
+            </View>
           )}
-          
+
           {selectionMode && (
-            <View style={{position:'absolute',top:10,right:10,backgroundColor:'#fff',borderRadius:12,padding:2}}>
+            <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#fff', borderRadius: 12, padding: 2 }}>
               <Entypo name={isSelected ? 'check' : 'circle'} size={18} color={isSelected ? '#7d64ca' : '#bbb'} />
             </View>
           )}
@@ -267,8 +267,18 @@ export default function VideoGallery() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#7d64ca" />
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Entypo name="chevron-thin-left" size={20} color="white" />
+        </TouchableOpacity>
+        <View style={styles.centerFill}>
+          <ActivityIndicator size="large" color="#7d64ca" />
+          <Text style={styles.loadingText}>Loading Videos…</Text>
+        </View>
       </View>
     );
   }
@@ -292,7 +302,7 @@ export default function VideoGallery() {
 
   if (!RNVideo) {
     return (
-      <View style={[styles.loadingContainer, { padding: 20 }]}> 
+      <View style={[styles.loadingContainer, { padding: 20 }]}>
         <Text style={{ color: 'white', textAlign: 'center' }}>
           Video playback is not available because the native player is not installed.
           To enable it, install 'react-native-video' and rebuild the app.
@@ -319,10 +329,10 @@ export default function VideoGallery() {
       </TouchableOpacity>
 
       {selectionMode && (
-        <View style={{flexDirection:'row',alignItems:'center',padding:10,backgroundColor:'#1a1333'}}>
-          <Text style={{color:'#fff',fontWeight:'bold',marginRight:16}}>{Object.values(selected).filter(Boolean).length} selected</Text>
-          <TouchableOpacity onPress={() => { setSelectionMode(false); setSelected({}); }} style={{marginRight:12}}>
-            <Text style={{color:'#bbb'}}>Cancel</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10, marginTop: -50, marginBottom: 20, backgroundColor: '#1a1333' }}>
+          <Text style={{ color: '#fff', fontWeight: 'bold', marginRight: 16 }}>{Object.values(selected).filter(Boolean).length} selected</Text>
+          <TouchableOpacity onPress={() => { setSelectionMode(false); setSelected({}); }} style={{ marginRight: 12 }}>
+            <Text style={{ color: '#bbb' }}>Cancel</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -402,6 +412,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+  },
+  centerFill: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: 'white',
+    marginTop: 12,
   },
   videoWrapper: {
     flex: 1,
