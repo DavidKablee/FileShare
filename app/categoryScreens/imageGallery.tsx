@@ -166,7 +166,50 @@ function ImageGallery() {
       >
         <Entypo name={selectionMode ? 'cross' : 'chevron-thin-left'} size={20} color="white" />
       </TouchableOpacity>
+      <View style={{ paddingTop: 30, paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)', backgroundColor: '#0b0b12' }}>
+        <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>Select photos</Text>
+        <Text style={{ color: '#bbb', fontSize: 12, textAlign: 'center', marginTop: 6 }}>Tap to preview • Long-press to select multiple</Text>
 
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
+          <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => {
+          const selectedCount = Object.values(selected).filter(Boolean).length;
+          if (selectedCount === images.length && images.length > 0) {
+            setSelected({});
+          } else {
+            const all: { [path: string]: boolean } = {};
+            images.forEach(i => { all[i.path] = true });
+            setSelected(all);
+            setSelectionMode(true);
+          }
+        }}
+        style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginRight: 8, backgroundColor: 'rgba(125,100,202,0.15)' }}
+          >
+        <Text style={{ color: '#fff', fontWeight: '600' }}>
+          {Object.values(selected).filter(Boolean).length === images.length && images.length > 0 ? 'Deselect all' : 'Select all'}
+        </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => {
+          // implement share/export action for selected items
+        }}
+        disabled={Object.values(selected).filter(Boolean).length === 0}
+        style={{
+          paddingVertical: 8,
+          paddingHorizontal: 14,
+          borderRadius: 8,
+          backgroundColor: Object.values(selected).filter(Boolean).length > 0 ? '#7d64ca' : 'rgba(125,100,202,0.25)',
+        }}
+          >
+        <Text style={{ color: 'white', fontWeight: '700' }}>
+          Share ({Object.values(selected).filter(Boolean).length})
+        </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       {selectionMode && (
         <View style={{flexDirection:'row',alignItems:'center',padding:10,backgroundColor:'#1a1333'}}>
           <Text style={{color:'#fff',fontWeight:'bold',marginRight:16}}>{Object.values(selected).filter(Boolean).length} selected</Text>
@@ -206,7 +249,6 @@ function ImageGallery() {
       for (const entry of entries) {
         if (out.length >= cap) break;
         if (entry.isDirectory()) {
-          // Skip hidden/system folders to reduce load
           const name = entry.name || '';
           if (name.startsWith('.')) continue;
           await collectImagesRecursively(entry.path, out, depth - 1, cap);
@@ -219,7 +261,6 @@ function ImageGallery() {
         }
       }
     } catch (e) {
-      // ignore folder read errors
     }
   }
 }
