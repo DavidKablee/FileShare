@@ -14,6 +14,7 @@ import AudioGallery from './app/categoryScreens/audioGallery';
 import DocumentsGallery from './app/categoryScreens/documentsGallery';
 import ImageGallery from './app/categoryScreens/imageGallery';
 import VideoGallery from './app/categoryScreens/videogallery';
+import FileGallery from './app/categoryScreens/FileGallery';
 
 
 
@@ -23,17 +24,10 @@ const Stack = createStackNavigator();
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
-
-  // On first app launch ask for storage/all-files access so the user
-  // can grant it before they navigate to the Documents screen. We
-  // persist a flag in AsyncStorage so we only prompt once.
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        // runtime require to avoid a hard dependency if the package
-        // isn't installed in some test setups.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         let AsyncStorage: any;
         try {
           AsyncStorage = require('@react-native-async-storage/async-storage');
@@ -89,6 +83,7 @@ function App() {
         <Stack.Screen name="VideoGallery" component={VideoGallery} />
         <Stack.Screen name="AudioGallery" component={AudioGallery} />
         <Stack.Screen name="DocumentsGallery" component={DocumentsGallery} />
+        <Stack.Screen name='FileGallery' component={FileGallery} />
       </Stack.Navigator>
     </NavigationContainer>
   );

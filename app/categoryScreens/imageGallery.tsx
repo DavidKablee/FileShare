@@ -1,7 +1,7 @@
 import { openDeviceSettings, requestStoragePermissions } from '../../utils/permissions';
-import { useNavigation } from '@react-navigation/native';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
 // react-native-fs may not be available during development; require guarded at runtime
 import * as safeRfs from '../utils/safeRfs';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -28,6 +28,20 @@ const IMAGE_EXTS = ['jpg','jpeg','png','gif','webp','heic','heif'];
 function ImageGallery() {
   const [images, setImages] = useState<GalleryItem[]>(() => imagesCache);
   const [loading, setLoading] = useState(() => imagesCache.length === 0);
+  const [fullScreenImageUri, setFullScreenImageUri] = useState<string | null>(null);
+
+  const route = useRoute();
+  const flatListRef = useRef<FlatList<GalleryItem>>(null);
+
+  useEffect(() => {
+    if ((route.params as any)?.startAt && images.length > 0) {
+      const startIndex = images.findIndex(img => img.path === (route.params as any)?.startAt);
+      if (startIndex !== -1) {
+        flatListRef.current?.scrollToIndex({ index: startIndex, animated: false });
+        setFullScreenImageUri('file://' + (route.params as any)?.startAt);
+      }
+    }
+  }, [images, (route.params as any)?.startAt]);
   const [error, setError] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selected, setSelected] = useState<{[path: string]: boolean}>({});
@@ -94,7 +108,7 @@ function ImageGallery() {
           if (selectionMode) {
             setSelected((prev) => ({ ...prev, [item.path]: !prev[item.path] }));
           } else {
-            // Optionally: preview image or do nothing
+            setFullScreenImageUri('file://' + item.path);
           }
         }}
       >
@@ -124,6 +138,17 @@ function ImageGallery() {
           <ActivityIndicator size="large" color="#7d64ca" />
           <Text style={styles.loadingText}>Loading images…</Text>
         </View>
+      </View>
+    );
+  }
+
+  if (fullScreenImageUri) {
+    return (
+      <View style={styles.fullScreenContainer}>
+        <Image source={{ uri: fullScreenImageUri }} style={styles.fullScreenImage} resizeMode="contain" />
+        <TouchableOpacity style={styles.closeButton} onPress={() => setFullScreenImageUri(null)}>
+          <Entypo name="cross" size={30} color="white" />
+        </TouchableOpacity>
       </View>
     );
   }
@@ -158,6 +183,7 @@ function ImageGallery() {
         <View style={styles.centerFill}><Text style={styles.errorText}>{error}</Text></View>
       ) : (
         <FlatList
+          ref={flatListRef}
           data={images}
           keyExtractor={(it) => it.path}
           numColumns={3}
@@ -247,6 +273,30 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 10,
     backgroundColor: 'rgba(255,255,255,0.05)'
+  },
+  fullScreenContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  fullScreenImage: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 101,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 5,
   },
 })
 

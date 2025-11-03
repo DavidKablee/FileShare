@@ -1,4 +1,5 @@
 import { openDeviceSettings, requestStoragePermissions } from '../../utils/permissions';
+import { useRoute } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -67,6 +68,13 @@ export default function VideoGallery() {
   const [selected, setSelected] = useState<{[path: string]: boolean}>({});
   const roots = Platform.OS === 'android' ? ANDROID_VIDEO_DIRS : IOS_VIDEO_DIRS_PLACEHOLDER;
   const navigation = useNavigation();
+  const route = useRoute();
+
+  useEffect(() => {
+    if ((route.params as any)?.startAt) {
+      setCurrentVideo((route.params as any)?.startAt);
+    }
+  }, [(route.params as any)?.startAt]);
 
   useEffect(() => {
     let isMounted = true;

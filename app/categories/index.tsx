@@ -52,7 +52,7 @@ export default function CategoriesScreen() {
                   navigation.navigate('DocumentsGallery' as never);
                   break;
                 case 'others':
-                  navigation.navigate('OtherFiles' as never);
+                  navigation.navigate('FileGallery' as never);
                   break;
                 default:
                   navigation.navigate('CategoryDetail' as never);
