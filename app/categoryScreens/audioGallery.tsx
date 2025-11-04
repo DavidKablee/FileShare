@@ -25,7 +25,7 @@ export default function AudioGallery() {
     const [loading, setLoading] = useState(() => audioCache.length === 0);
     const [error, setError] = useState<string | null>(null);
     const [selectionMode, setSelectionMode] = useState(false);
-    const [selected, setSelected] = useState<{[path: string]: boolean}>({});
+    const [selected, setSelected] = useState<{ [path: string]: boolean }>({});
 
     const playerRef = useRef<any>(null);
 
@@ -182,55 +182,55 @@ export default function AudioGallery() {
             </TouchableOpacity>
 
             <View style={{ paddingTop: 30, paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)', backgroundColor: '#0b0b12' }}>
-        <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>Select photos</Text>
-        <Text style={{ color: '#bbb', fontSize: 12, textAlign: 'center', marginTop: 6 }}>Tap to preview • Long-press to select multiple</Text>
+                <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>Select audio files</Text>
+                <Text style={{ color: '#bbb', fontSize: 12, textAlign: 'center', marginTop: 6 }}>Tap to preview • Long-press to select multiple</Text>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
-          <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => {
-          const selectedCount = Object.values(selected).filter(Boolean).length;
-          if (selectedCount === items.length && items.length > 0) {
-            setSelected({});
-          } else {
-            const all: { [path: string]: boolean } = {};
-            items.forEach(i => { all[i.path] = true });
-            setSelected(all);
-            setSelectionMode(true);
-          }
-        }}
-        style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginRight: 8, backgroundColor: 'rgba(125,100,202,0.15)' }}
-          >
-        <Text style={{ color: '#fff', fontWeight: '600' }}>
-          {Object.values(selected).filter(Boolean).length === items.length && items.length > 0 ? 'Deselect all' : 'Select all'}
-        </Text>
-          </TouchableOpacity>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => {
+                            const selectedCount = Object.values(selected).filter(Boolean).length;
+                            if (selectedCount === items.length && items.length > 0) {
+                                setSelected({});
+                            } else {
+                                const all: { [path: string]: boolean } = {};
+                                items.forEach(i => { all[i.path] = true });
+                                setSelected(all);
+                                setSelectionMode(true);
+                            }
+                        }}
+                        style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginRight: 8, backgroundColor: 'rgba(125,100,202,0.15)' }}
+                    >
+                        <Text style={{ color: '#fff', fontWeight: '600' }}>
+                            {Object.values(selected).filter(Boolean).length === items.length && items.length > 0 ? 'Deselect all' : 'Select all'}
+                        </Text>
+                    </TouchableOpacity>
 
-          <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => {
-          // implement share/export action for selected items
-        }}
-        disabled={Object.values(selected).filter(Boolean).length === 0}
-        style={{
-          paddingVertical: 8,
-          paddingHorizontal: 14,
-          borderRadius: 8,
-          backgroundColor: Object.values(selected).filter(Boolean).length > 0 ? '#7d64ca' : 'rgba(125,100,202,0.25)',
-        }}
-          >
-        <Text style={{ color: 'white', fontWeight: '700' }}>
-          Share ({Object.values(selected).filter(Boolean).length})
-        </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+                    <TouchableOpacity
+                        activeOpacity={0.9}
+                        onPress={() => {
+                            // implement share/export action for selected items
+                        }}
+                        disabled={Object.values(selected).filter(Boolean).length === 0}
+                        style={{
+                            paddingVertical: 8,
+                            paddingHorizontal: 14,
+                            borderRadius: 8,
+                            backgroundColor: Object.values(selected).filter(Boolean).length > 0 ? '#7d64ca' : 'rgba(125,100,202,0.25)',
+                        }}
+                    >
+                        <Text style={{ color: 'white', fontWeight: '700' }}>
+                            Share ({Object.values(selected).filter(Boolean).length})
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
 
             {selectionMode && (
                 <View style={{flexDirection:'row',alignItems:'center',padding:10,backgroundColor:'#1a1333'}}>
-                    <Text style={{color:'#fff',fontWeight:'bold',marginRight:16}}>{Object.values(selected).filter(Boolean).length} selected</Text>
-                    <TouchableOpacity onPress={() => { setSelectionMode(false); setSelected({}); }} style={{marginRight:12}}>
-                        <Text style={{color:'#bbb'}}>Cancel</Text>
+                    <Text style={{ color: '#fff', fontWeight: 'bold', marginRight: 16 }}>{Object.values(selected).filter(Boolean).length} selected</Text>
+                    <TouchableOpacity onPress={() => { setSelectionMode(false); setSelected({}); }} style={{ marginRight: 12 }}>
+                        <Text style={{ color: '#bbb' }}>Cancel</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -267,7 +267,7 @@ export default function AudioGallery() {
                             >
                                 <Text style={{ color: 'white', flex: 1 }}>{item.name}</Text>
                                 {selectionMode ? (
-                                    <View style={{backgroundColor:'#fff',borderRadius:12,padding:2,marginRight:8}}>
+                                    <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 2, marginRight: 8 }}>
                                         <Entypo name={isSelected ? 'check' : 'circle'} size={18} color={isSelected ? '#7d64ca' : '#bbb'} />
                                     </View>
                                 ) : (

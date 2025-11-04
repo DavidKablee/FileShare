@@ -13,6 +13,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Share,
 } from 'react-native';
 
 import * as safeRfs from '../utils/safeRfs';
@@ -20,17 +21,14 @@ import * as safeRfs from '../utils/safeRfs';
 
 import Entypo from 'react-native-vector-icons/Entypo';
 let RNVideo: any = null;
+let ViewShot: any = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   RNVideo = require('react-native-video').default;
+  ViewShot = require('react-native-view-shot').default;
 } catch (e) {
   RNVideo = null;
-}
-let createThumbnailFunc: any = null;
-try {
-  createThumbnailFunc = null;
-} catch (e) {
-  createThumbnailFunc = null;
+  ViewShot = null;
 }
 
 type VideoItem = {
@@ -41,6 +39,7 @@ type VideoItem = {
 
 let videosCache: VideoItem[] = [];
 let videosScannedOnce = false;
+let thumbnailCacheMemory: { [path: string]: string } = {};
 
 const { width } = Dimensions.get('window');
 const NUM_COLUMNS = 3;
@@ -66,6 +65,7 @@ export default function VideoGallery() {
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selected, setSelected] = useState<{ [path: string]: boolean }>({});
+  const [thumbnailCache, setThumbnailCache] = useState<{ [path: string]: string }>(() => thumbnailCacheMemory);
   const roots = Platform.OS === 'android' ? ANDROID_VIDEO_DIRS : IOS_VIDEO_DIRS_PLACEHOLDER;
   const navigation = useNavigation();
   const route = useRoute();
@@ -174,7 +174,9 @@ export default function VideoGallery() {
     }) => {
       const isCurrent = currentVideo === item.path;
       const videoRef = useRef<any>(null);
+      const viewShotRef = useRef<any>(null);
       const [playbackError, setPlaybackError] = useState<string | null>(null);
+      const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
       useEffect(() => {
         return () => {
@@ -183,6 +185,23 @@ export default function VideoGallery() {
           }
         };
       }, []);
+
+      const captureVideoFrame = async () => {
+        if (!viewShotRef.current || !ViewShot || isGeneratingThumbnail || thumbnailCache[item.path]) return;
+        try {
+          setIsGeneratingThumbnail(true);
+          const uri = await viewShotRef.current.capture({
+            format: 'jpg',
+            quality: 0.6,
+          });
+          thumbnailCacheMemory[item.path] = uri;
+          setThumbnailCache(prev => ({ ...prev, [item.path]: uri }));
+        } catch (e) {
+          console.error('Failed to capture thumbnail:', e);
+        } finally {
+          setIsGeneratingThumbnail(false);
+        }
+      };
 
       const handleError = (error: { error: { message?: string } } | string) => {
         console.error('Video playback error object:', error);
@@ -234,9 +253,24 @@ export default function VideoGallery() {
             </View>
           ) : (
             <View style={styles.thumbnailContainer}>
-              <View style={[styles.thumbnailImage, { backgroundColor: '#10121a', justifyContent: 'center', alignItems: 'center' }]}>
-                <View style={{ width: '85%', height: '60%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 6 }} />
-              </View>
+              <ViewShot ref={viewShotRef} style={[styles.thumbnailImage, { backgroundColor: '#10121a' }]}>
+                {thumbnailCache[item.path] ? (
+                  <Image source={{ uri: thumbnailCache[item.path] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                ) : (
+                  <RNVideo
+                    source={{ uri: item.path.startsWith('file://') ? item.path : 'file://' + item.path }}
+                    style={{ width: '100%', height: '100%' }}
+                    resizeMode={'cover'}
+                    paused={true}
+                    muted={true}
+                    onLoad={() => {
+                      if (!thumbnailCache[item.path] && !isGeneratingThumbnail) {
+                        setTimeout(captureVideoFrame, 300);
+                      }
+                    }}
+                  />
+                )}
+              </ViewShot>
               <View style={styles.playOverlay}>
                 <Entypo name="controller-play" size={28} color="white" />
               </View>
@@ -354,8 +388,33 @@ export default function VideoGallery() {
 
           <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() => {
-          // implement share/export action for selected items
+        onPress={async () => {
+          try {
+            const selectedVideos = videos.filter(video => selected[video.path]);
+            if (selectedVideos.length === 0) return;
+
+            // For multiple videos, share the first one with info about total count
+            if (selectedVideos.length === 1) {
+              const video = selectedVideos[0];
+              const path = video.path.startsWith('file://') ? video.path : 'file://' + video.path;
+              await Share.share({
+                url: path,
+                title: video.name,
+                message: video.name
+              });
+            } else {
+              // When sharing multiple videos, we'll share the count and names
+              const message = `Sharing ${selectedVideos.length} videos:\n` + 
+                selectedVideos.map(v => v.name).join('\n');
+              
+              await Share.share({
+                title: `${selectedVideos.length} Videos`,
+                message: message
+              });
+            }
+          } catch (error) {
+            console.error('Error sharing videos:', error);
+          }
         }}
         disabled={Object.values(selected).filter(Boolean).length === 0}
         style={{

@@ -1,7 +1,7 @@
 import { openDeviceSettings, requestStoragePermissions } from '../../utils/permissions';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View, Dimensions, Share } from 'react-native';
 import * as safeRfs from '../utils/safeRfs';
 import Entypo from 'react-native-vector-icons/Entypo';
 
@@ -193,8 +193,29 @@ function ImageGallery() {
 
           <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() => {
-          // implement share/export action for selected items
+        onPress={async () => {
+          try {
+            const selectedImages = images.filter(img => selected[img.path]);
+            if (selectedImages.length === 0) return;
+
+            if (selectedImages.length === 1) {
+              const img = selectedImages[0];
+              const url = img.path.startsWith('file://') ? img.path : 'file://' + img.path;
+              await Share.share({
+                url,
+                title: img.name,
+                message: img.name,
+              });
+            } else {
+              const message = `Sharing ${selectedImages.length} images:\n` + selectedImages.map(i => i.name).join('\n');
+              await Share.share({
+                title: `${selectedImages.length} Images`,
+                message,
+              });
+            }
+          } catch (err) {
+            console.error('Error sharing images:', err);
+          }
         }}
         disabled={Object.values(selected).filter(Boolean).length === 0}
         style={{
