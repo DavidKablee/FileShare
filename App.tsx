@@ -15,6 +15,7 @@ import DocumentsGallery from './app/categoryScreens/documentsGallery';
 import ImageGallery from './app/categoryScreens/imageGallery';
 import VideoGallery from './app/categoryScreens/videogallery';
 import FileGallery from './app/categoryScreens/FileGallery';
+import ReceiveScreen from './app/receiveScreen/recieveScreen';
 
 
 
@@ -84,6 +85,7 @@ function App() {
         <Stack.Screen name="AudioGallery" component={AudioGallery} />
         <Stack.Screen name="DocumentsGallery" component={DocumentsGallery} />
         <Stack.Screen name='FileGallery' component={FileGallery} />
+        <Stack.Screen name="ReceiveScreen" component={ReceiveScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

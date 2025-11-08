@@ -111,7 +111,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.buttonSecondary]}
-            onPress={() => navigation.navigate(''as never)}
+            onPress={() => navigation.navigate('ReceiveScreen' as never)}
           >
             <Feather name="download" size={40} color="white" />
             <Text style={styles.buttonText}>Receive</Text>
