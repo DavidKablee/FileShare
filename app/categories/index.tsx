@@ -15,7 +15,7 @@ const CATEGORIES = [
 
 export default function CategoriesScreen() {
   const navigation = useNavigation();
-  
+
   return (
     <View style={styles.container}>
       <TouchableOpacity

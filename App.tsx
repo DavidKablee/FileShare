@@ -34,7 +34,6 @@ function App() {
         let AsyncStorage: any;
         try {
           AsyncStorage = require('@react-native-async-storage/async-storage');
-          // prefer default export if present
           if (AsyncStorage && AsyncStorage.default) AsyncStorage = AsyncStorage.default;
         } catch (_err) {
           AsyncStorage = null;
@@ -44,27 +43,21 @@ function App() {
           const asked = await AsyncStorage.getItem('askedAllFilesV1');
           if (asked) return;
         }
-
-        // On Android 11+ prefer opening the All-files settings page
-        // instead of requesting READ_EXTERNAL_STORAGE which triggers
-        // the media permission dialog.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { Platform } = require('react-native');
         const ver = Number(Platform.Version) || 0;
         if (Platform.OS === 'android' && ver >= 30) {
-          try { await openManageAllFilesSettings(); } catch (e) { /* silent per user */ }
+          try { await openManageAllFilesSettings(); } catch (e) { }
         } else {
           const granted = await requestStoragePermissions();
           if (!granted) {
-            try { await openManageAllFilesSettings(); } catch (e) { /* silent per user */ }
+            try { await openManageAllFilesSettings(); } catch (e) { }
           }
         }
 
         if (canUseAsync) {
-          try { await AsyncStorage.setItem('askedAllFilesV1', '1'); } catch (e) { /* ignore */ }
+          try { await AsyncStorage.setItem('askedAllFilesV1', '1'); } catch (e) { }
         }
       } catch (e) {
-        // ignore missing AsyncStorage or other errors
         console.warn('First-launch storage prompt failed', e);
       }
     })();
