@@ -15,7 +15,9 @@ import DocumentsGallery from './app/categoryScreens/documentsGallery';
 import ImageGallery from './app/categoryScreens/imageGallery';
 import VideoGallery from './app/categoryScreens/videogallery';
 import FileGallery from './app/categoryScreens/FileGallery';
-import ReceiveScreen from './app/receiveScreen/recieveScreen';
+import ReceiveScreen from './app/transferScreens/recieveScreen';
+import SendScreen from './app/transferScreens/sendScreen';
+import SendOptionScreen from './app/transferScreens/SendOptionScreen';
 
 
 
@@ -86,6 +88,8 @@ function App() {
         <Stack.Screen name="DocumentsGallery" component={DocumentsGallery} />
         <Stack.Screen name='FileGallery' component={FileGallery} />
         <Stack.Screen name="ReceiveScreen" component={ReceiveScreen} />
+        <Stack.Screen name="SendScreen" component={SendScreen} />
+        <Stack.Screen name="SendOptionScreen" component={SendOptionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

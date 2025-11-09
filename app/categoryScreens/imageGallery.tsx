@@ -1,14 +1,23 @@
 import { openDeviceSettings, requestStoragePermissions } from '../../utils/permissions';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View, Dimensions, Share } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+} from 'react-native';
 import * as safeRfs from '../utils/safeRfs';
 import Entypo from 'react-native-vector-icons/Entypo';
 
 type GalleryItem = { path: string; name: string };
 
 let imagesCache: GalleryItem[] = [];
-
 
 const ANDROID_IMAGE_DIRS = [
   '/storage/emulated/0/DCIM',
@@ -18,62 +27,50 @@ const ANDROID_IMAGE_DIRS = [
   '/storage/emulated/0/Telegram/Telegram Images',
 ];
 
-// Don't read RNFS.* fields at module-eval time (native module might be null)
 const IOS_IMAGE_DIRS_PLACEHOLDER: string[] = [];
+const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
 
-const IMAGE_EXTS = ['jpg','jpeg','png','gif','webp','heic','heif'];
-
-function ImageGallery() {
+export default function ImageGallery() {
   const [images, setImages] = useState<GalleryItem[]>(() => imagesCache);
   const [loading, setLoading] = useState(() => imagesCache.length === 0);
+  const [error, setError] = useState<string | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selected, setSelected] = useState<{ [path: string]: boolean }>({});
   const [fullScreenImageUri, setFullScreenImageUri] = useState<string | null>(null);
 
   const route = useRoute();
+  const navigation = useNavigation();
   const flatListRef = useRef<FlatList<GalleryItem>>(null);
 
-  useEffect(() => {
-    if ((route.params as any)?.startAt && images.length > 0) {
-      const startIndex = images.findIndex(img => img.path === (route.params as any)?.startAt);
-      if (startIndex !== -1) {
-        flatListRef.current?.scrollToIndex({ index: startIndex, animated: false });
-        setFullScreenImageUri('file://' + (route.params as any)?.startAt);
-      }
-    }
-  }, [images, (route.params as any)?.startAt]);
-  const [error, setError] = useState<string | null>(null);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selected, setSelected] = useState<{[path: string]: boolean}>({});
-
-  const roots = useMemo(() => (
-    Platform.OS === 'android' ? ANDROID_IMAGE_DIRS : IOS_IMAGE_DIRS_PLACEHOLDER
-  ), []);
+  const roots = useMemo(
+    () => (Platform.OS === 'android' ? ANDROID_IMAGE_DIRS : IOS_IMAGE_DIRS_PLACEHOLDER),
+    []
+  );
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
-        // only set loading if we truly need to perform an IO scan
         if (imagesCache.length === 0) setLoading(true);
         setError(null);
         const hasPermission = await requestStoragePermissions();
         if (!hasPermission) {
           if (isMounted) setError('Storage permission denied. Please grant access to view images.');
-          // Optionally, prompt to open settings
           openDeviceSettings();
           return;
         }
         const platformPaths = safeRfs.getPlatformPaths();
-        if (!platformPaths.docs && Platform.OS !== 'android') {
-          if (isMounted) setError("File system native module isn't available. Install and rebuild the app (react-native-fs).");
-          return;
-        }
-        const platformRoots = Platform.OS === 'android' ? ANDROID_IMAGE_DIRS : [platformPaths.pictures || platformPaths.docs].filter(Boolean) as string[];
+        const platformRoots =
+          Platform.OS === 'android'
+            ? ANDROID_IMAGE_DIRS
+            : [platformPaths.pictures || platformPaths.docs].filter(Boolean) as string[];
+
         const collected: GalleryItem[] = [];
         for (const root of platformRoots) {
           try {
             const exists = await safeRfs.exists(root);
             if (!exists) continue;
-          } catch (e) {
+          } catch {
             continue;
           }
           await collectImagesRecursively(root, collected, 3, 800);
@@ -82,13 +79,15 @@ function ImageGallery() {
         if (!isMounted) return;
         imagesCache = collected;
         setImages(collected);
-      } catch (e: any) {
+      } catch {
         if (isMounted) setError('Failed to load images');
       } finally {
         if (isMounted) setLoading(false);
       }
     })();
-    return () => { isMounted = false };
+    return () => {
+      isMounted = false;
+    };
   }, [roots]);
 
   const renderItem = ({ item }: { item: GalleryItem }) => {
@@ -109,9 +108,22 @@ function ImageGallery() {
           }
         }}
       >
-        <Image source={{ uri: 'file://' + item.path }} style={[styles.thumb, isSelected && { borderWidth: 3, borderColor: '#7d64ca' }]} resizeMode="cover" />
+        <Image
+          source={{ uri: 'file://' + item.path }}
+          style={[styles.thumb, isSelected && { borderWidth: 3, borderColor: '#7d64ca' }]}
+          resizeMode="cover"
+        />
         {selectionMode && (
-          <View style={{position:'absolute',top:10,right:10,backgroundColor:'#fff',borderRadius:12,padding:2}}>
+          <View
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              backgroundColor: '#fff',
+              borderRadius: 12,
+              padding: 2,
+            }}
+          >
             <Entypo name={isSelected ? 'check' : 'circle'} size={18} color={isSelected ? '#7d64ca' : '#bbb'} />
           </View>
         )}
@@ -119,22 +131,11 @@ function ImageGallery() {
     );
   };
 
-  const navigation = useNavigation();
-
   if (loading) {
     return (
-      <View style={styles.container}> 
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Entypo name="chevron-thin-left" size={20} color="white" />
-        </TouchableOpacity>
-        <View style={styles.centerFill}>
-          <ActivityIndicator size="large" color="#7d64ca" />
-          <Text style={styles.loadingText}>Loading images…</Text>
-        </View>
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#7d64ca" />
+        <Text style={styles.loadingText}>Loading images…</Text>
       </View>
     );
   }
@@ -166,82 +167,66 @@ function ImageGallery() {
       >
         <Entypo name={selectionMode ? 'cross' : 'chevron-thin-left'} size={20} color="white" />
       </TouchableOpacity>
-      <View style={{ paddingTop: 30, paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)', backgroundColor: '#0b0b12' }}>
-        <Text style={{ color: 'white', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>Select photos</Text>
-        <Text style={{ color: '#bbb', fontSize: 12, textAlign: 'center', marginTop: 6 }}>Tap to preview • Long-press to select multiple</Text>
+
+      <View style={styles.header}>
+        <Text style={styles.title}>Select Photos</Text>
+        <Text style={styles.subtitle}>Tap to preview • Long-press to select multiple</Text>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
           <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => {
-          const selectedCount = Object.values(selected).filter(Boolean).length;
-          if (selectedCount === images.length && images.length > 0) {
-            setSelected({});
-          } else {
-            const all: { [path: string]: boolean } = {};
-            images.forEach(i => { all[i.path] = true });
-            setSelected(all);
-            setSelectionMode(true);
-          }
-        }}
-        style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginRight: 8, backgroundColor: 'rgba(125,100,202,0.15)' }}
+            activeOpacity={0.8}
+            onPress={() => {
+              const selectedCount = Object.values(selected).filter(Boolean).length;
+              if (selectedCount === images.length && images.length > 0) {
+                setSelected({});
+              } else {
+                const all: { [path: string]: boolean } = {};
+                images.forEach((i) => {
+                  all[i.path] = true;
+                });
+                setSelected(all);
+                setSelectionMode(true);
+              }
+            }}
+            style={styles.selectAllButton}
           >
-        <Text style={{ color: '#fff', fontWeight: '600' }}>
-          {Object.values(selected).filter(Boolean).length === images.length && images.length > 0 ? 'Deselect all' : 'Select all'}
-        </Text>
+            <Text style={styles.buttonText}>
+              {Object.values(selected).filter(Boolean).length === images.length && images.length > 0
+                ? 'Deselect all'
+                : 'Select all'}
+            </Text>
           </TouchableOpacity>
 
+          {/* 🚀 Updated SHARE button */}
           <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={async () => {
-          try {
-            const selectedImages = images.filter(img => selected[img.path]);
-            if (selectedImages.length === 0) return;
-
-            if (selectedImages.length === 1) {
-              const img = selectedImages[0];
-              const url = img.path.startsWith('file://') ? img.path : 'file://' + img.path;
-              await Share.share({
-                url,
-                title: img.name,
-                message: img.name,
-              });
-            } else {
-              const message = `Sharing ${selectedImages.length} images:\n` + selectedImages.map(i => i.name).join('\n');
-              await Share.share({
-                title: `${selectedImages.length} Images`,
-                message,
-              });
-            }
-          } catch (err) {
-            console.error('Error sharing images:', err);
-          }
-        }}
-        disabled={Object.values(selected).filter(Boolean).length === 0}
-        style={{
-          paddingVertical: 8,
-          paddingHorizontal: 14,
-          borderRadius: 8,
-          backgroundColor: Object.values(selected).filter(Boolean).length > 0 ? '#7d64ca' : 'rgba(125,100,202,0.25)',
-        }}
+            activeOpacity={0.9}
+            onPress={() => {
+              const selectedImages = images.filter((img) => selected[img.path]);
+              if (selectedImages.length === 0) return;
+              (navigation as any).navigate('SendScreen', { images: selectedImages });
+            }}
+            disabled={Object.values(selected).filter(Boolean).length === 0}
+            style={[
+              styles.shareButton,
+              {
+                backgroundColor:
+                  Object.values(selected).filter(Boolean).length > 0
+                    ? '#7d64ca'
+                    : 'rgba(125,100,202,0.25)',
+              },
+            ]}
           >
-        <Text style={{ color: 'white', fontWeight: '700' }}>
-          Share ({Object.values(selected).filter(Boolean).length})
-        </Text>
+            <Text style={styles.shareText}>
+              Share ({Object.values(selected).filter(Boolean).length})
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
-      {selectionMode && (
-        <View style={{flexDirection:'row',alignItems:'center',padding:10,backgroundColor:'#1a1333'}}>
-          <Text style={{color:'#fff',fontWeight:'bold',marginRight:16}}>{Object.values(selected).filter(Boolean).length} selected</Text>
-          <TouchableOpacity onPress={() => { setSelectionMode(false); setSelected({}); }} style={{marginRight:12}}>
-            <Text style={{color:'#bbb'}}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {error ? (
-        <View style={styles.centerFill}><Text style={styles.errorText}>{error}</Text></View>
+        <View style={styles.centerFill}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
       ) : (
         <FlatList
           ref={flatListRef}
@@ -257,13 +242,8 @@ function ImageGallery() {
       )}
     </View>
   );
-  
-  async function collectImagesRecursively(
-    dir: string,
-    out: GalleryItem[],
-    depth: number,
-    cap: number,
-  ) {
+
+  async function collectImagesRecursively(dir: string, out: GalleryItem[], depth: number, cap: number) {
     if (depth < 0 || out.length >= cap) return;
     try {
       const entries = await safeRfs.readDir(dir);
@@ -281,82 +261,68 @@ function ImageGallery() {
           }
         }
       }
-    } catch (e) {
-    }
+    } catch {}
   }
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1, backgroundColor: '#0b0b12' },
+  header: {
+    paddingTop: 30,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
     backgroundColor: '#0b0b12',
   },
-  backButton: {
-    position: 'absolute',
-    marginTop: 30,
-    top: 20, left: 16, zIndex: 10, width: 40, height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(125, 100, 202, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(125, 100, 202, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#7d64ca',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+  title: { color: 'white', fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  subtitle: { color: '#bbb', fontSize: 12, textAlign: 'center', marginTop: 6 },
+  selectAllButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginRight: 8,
+    backgroundColor: 'rgba(125,100,202,0.15)',
   },
-  centerFill: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  shareButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
   },
-  loadingText: {
-    color: 'white',
-    marginTop: 12,
-  },
-  errorText: {
-    color: '#ff6b6b',
-  },
-  grid: {
-    paddingTop: 80, // leave space for back button
-    paddingHorizontal: 6,
-  },
-  thumbWrap: {
-    width: '33.3333%',
-    aspectRatio: 1,
-    padding: 6,
-  },
-  thumb: {
-    flex: 1,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)'
-  },
+  shareText: { color: 'white', fontWeight: '700' },
+  buttonText: { color: '#fff', fontWeight: '600' },
+  grid: { paddingTop: 80, paddingHorizontal: 6 },
+  thumbWrap: { width: '33.3333%', aspectRatio: 1, padding: 6 },
+  thumb: { flex: 1, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.05)' },
   fullScreenContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'black',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 100,
   },
-  fullScreenImage: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-  },
+  fullScreenImage: { width: Dimensions.get('window').width, height: Dimensions.get('window').height },
   closeButton: {
     position: 'absolute',
     top: 40,
     right: 20,
-    zIndex: 101,
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 20,
     padding: 5,
   },
-})
-
-export default ImageGallery;
+  backButton: {
+    position: 'absolute',
+    marginTop: 30,
+    top: 20,
+    left: 16,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(125, 100, 202, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: { color: 'white', marginTop: 12 },
+  errorText: { color: '#ff6b6b' },
+  centerFill: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
