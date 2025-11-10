@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 20,
+    marginTop: 50,
   },
   qrContainer: {
     alignItems: 'center',
