@@ -58,6 +58,30 @@ export const requestStoragePermissions = async (): Promise<boolean> => {
   }
 };
 
+// ✅ Added Wi-Fi / Location Permission (for Wi-Fi scanning & direct transfer)
+export const requestWifiPermissions = async (): Promise<boolean> => {
+  if (Platform.OS !== 'android') {
+    return true;
+  }
+
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      {
+        title: 'Location Permission',
+        message: 'App needs location access to scan nearby Wi-Fi networks.',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      }
+    );
+
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (err) {
+    console.warn('Error requesting Wi-Fi (location) permission:', err);
+    return false;
+  }
+};
+
 export const openDeviceSettings = async (): Promise<void> => {
   if (Platform.OS === 'android') {
     try {
@@ -76,7 +100,6 @@ export const openDeviceSettings = async (): Promise<void> => {
     await Linking.openURL('app-settings:');
   }
 };
-
 
 export const hasManageAllFilesPermission = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') {

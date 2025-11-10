@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  PermissionsAndroid,
+  Platform,
+  Alert,
+} from 'react-native';
 import Entypo from 'react-native-vector-icons/Entypo';
 import QRCode from 'react-native-qrcode-svg';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import WifiManager from "react-native-wifi-reborn";
+import WifiManager from 'react-native-wifi-reborn';
 
 export default function SendFormatScreen() {
   const navigation = useNavigation();
@@ -19,20 +28,74 @@ export default function SendFormatScreen() {
     port: 8080,
   };
 
-  // Only load Wi-Fi networks when in "wifi" mode
   useEffect(() => {
     if (mode === 'wifi') {
-      scanWifiNetworks();
+      requestWifiPermissionAndScan();
     }
   }, [mode]);
+
+  const requestWifiPermissionAndScan = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        // Android 13+ (API 33)
+        if (Platform.Version >= 33) {
+          const nearbyGranted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
+            {
+              title: 'Wi-Fi Permission',
+              message:
+                'App needs access to nearby Wi-Fi devices to scan networks.',
+              buttonPositive: 'OK',
+            },
+          );
+          if (nearbyGranted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              'Permission Required',
+              'Wi-Fi scanning requires permission to access nearby devices.',
+            );
+            return;
+          }
+        } else {
+          // Android 12 and below
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+              title: 'Location Permission',
+              message:
+                'App needs location access to scan nearby Wi-Fi networks.',
+              buttonPositive: 'OK',
+            },
+          );
+
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              'Permission Required',
+              'Location access is needed to list Wi-Fi networks.',
+            );
+            return;
+          }
+        }
+      }
+
+      await scanWifiNetworks();
+    } catch (err) {
+      console.error('Permission or scanning error:', err);
+    }
+  };
 
   const scanWifiNetworks = async () => {
     try {
       setLoading(true);
       const results = await WifiManager.loadWifiList();
-      setWifiNetworks(results);
+      if (Array.isArray(results)) {
+        setWifiNetworks(results);
+      } else {
+        console.warn('Unexpected Wi-Fi scan result:', results);
+        setWifiNetworks([]);
+      }
     } catch (error) {
       console.error('Error scanning Wi-Fi networks:', error);
+      setWifiNetworks([]);
     } finally {
       setLoading(false);
     }
@@ -73,7 +136,7 @@ export default function SendFormatScreen() {
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.networkItem}>
                   <Entypo name="signal" size={18} color="white" />
-                  <Text style={styles.networkText}>{item.SSID}</Text>
+                  <Text style={styles.networkText}>{item.SSID || 'Unknown'}</Text>
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
