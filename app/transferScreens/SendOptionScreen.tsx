@@ -20,15 +20,16 @@ export default function SendOptionScreen() {
 
             <TouchableOpacity
                 style={[styles.optionButton, { backgroundColor: '#7d64ca' }]}
-                onPress={() => navigation.navigate('WifiSendScreen' as never)}
+                onPress={() => navigation.navigate('SendFormatScreen' as never)}
             >
                 <Entypo name="signal" size={24} color="white" />
                 <Text style={styles.optionText}>Send via Wi-Fi</Text>
             </TouchableOpacity>
 
+
             <TouchableOpacity
                 style={[styles.optionButton, { backgroundColor: '#00b894' }]}
-                onPress={() => navigation.navigate('QrSendScreen' as never)}
+                onPress={() => navigation.navigate('SendFormatScreen' as never)}
             >
                 <AntDesign name="qrcode" color="#ffffffff" size={24} />
                 <Text style={styles.optionText}>Send via QR Code</Text>

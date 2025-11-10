@@ -266,7 +266,9 @@ export default function ImageGallery() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0b12' },
+  container: { flex: 1, backgroundColor: '#0b0b12', 
+    paddingTop: 60,
+   },
   header: {
     paddingTop: 30,
     paddingHorizontal: 16,
@@ -322,7 +324,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingText: { color: 'white', marginTop: 12 },
+  loadingText: { color: 'white', marginTop: '90%', marginLeft: "40%", alignItems: 'center' },
   errorText: { color: '#ff6b6b' },
   centerFill: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

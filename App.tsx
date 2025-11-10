@@ -18,6 +18,7 @@ import FileGallery from './app/categoryScreens/FileGallery';
 import ReceiveScreen from './app/transferScreens/recieveScreen';
 import SendScreen from './app/transferScreens/sendScreen';
 import SendOptionScreen from './app/transferScreens/SendOptionScreen';
+import sendFormatScreen from './app/transferScreens/sendFormatScreen';
 
 
 
@@ -83,6 +84,7 @@ function App() {
         <Stack.Screen name="ReceiveScreen" component={ReceiveScreen} />
         <Stack.Screen name="SendScreen" component={SendScreen} />
         <Stack.Screen name="SendOptionScreen" component={SendOptionScreen} />
+        <Stack.Screen name='SendFormatScreen' component={sendFormatScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
