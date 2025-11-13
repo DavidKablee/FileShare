@@ -1,6 +1,24 @@
 import { Platform, PermissionsAndroid, Linking, NativeModules } from 'react-native';
 const AllFilesNative = NativeModules?.AllFilesPermissionModule;
 
+// Check if running on Android 13+ (API level 33+)
+const isAndroid13Plus = (): boolean => {
+  try {
+    return (Platform.OS === 'android' && Platform.Version >= 33);
+  } catch {
+    return false;
+  }
+};
+
+// Check if running on Android 16+ (API level 35+)
+const isAndroid16Plus = (): boolean => {
+  try {
+    return (Platform.OS === 'android' && Platform.Version >= 35);
+  } catch {
+    return false;
+  }
+};
+
 export const isExternalStorageManager = async (): Promise<boolean> => {
   if (Platform.OS !== 'android' || !AllFilesNative || typeof AllFilesNative.isExternalStorageManager !== 'function') {
     return true;
@@ -29,26 +47,78 @@ export const requestStoragePermissions = async (): Promise<boolean> => {
   }
 
   try {
-    const hasPermission = await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE
-    );
+    // For Android 16+ (API 35+), request the new granular media permissions
+    if (isAndroid16Plus()) {
+      const permissions = [
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+      ];
 
-    if (hasPermission) {
-      return true;
+      // Try to add the user-selected permissions if available
+      try {
+        if ((PermissionsAndroid.PERMISSIONS as any).READ_MEDIA_VISUAL_USER_SELECTED) {
+          permissions.push((PermissionsAndroid.PERMISSIONS as any).READ_MEDIA_VISUAL_USER_SELECTED);
+        }
+        if ((PermissionsAndroid.PERMISSIONS as any).READ_MEDIA_AUDIO_USER_SELECTED) {
+          permissions.push((PermissionsAndroid.PERMISSIONS as any).READ_MEDIA_AUDIO_USER_SELECTED);
+        }
+      } catch (e) {
+        // User-selected permissions not available on this Android version
+      }
+
+      const results = await PermissionsAndroid.requestMultiple(permissions);
+      
+      // Check if all critical permissions are granted
+      const allGranted = permissions.every(
+        perm => results[perm] === PermissionsAndroid.RESULTS.GRANTED
+      );
+
+      if (allGranted) {
+        return true;
+      }
+    } else if (isAndroid13Plus()) {
+      // For Android 13-15 (API 33-34), request the media-specific permissions
+      const permissions = [
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+      ];
+
+      const results = await PermissionsAndroid.requestMultiple(permissions);
+      
+      const allGranted = permissions.every(
+        perm => results[perm] === PermissionsAndroid.RESULTS.GRANTED
+      );
+
+      if (allGranted) {
+        return true;
+      }
+    } else {
+      // For Android 12 and below, use the legacy READ_EXTERNAL_STORAGE permission
+      const hasPermission = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE
+      );
+
+      if (hasPermission) {
+        return true;
+      }
+
+      const status = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        {
+          title: 'Storage Permission',
+          message: 'App needs access to your storage to read files.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+
+      return status === PermissionsAndroid.RESULTS.GRANTED;
     }
 
-    const status = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      {
-        title: 'Storage Permission',
-        message: 'App needs access to your storage to read files.',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      },
-    );
-
-    return status === PermissionsAndroid.RESULTS.GRANTED;
+    return false;
   } catch (err) {
     console.warn('Error requesting storage permission:', err);
     const error = new Error('Storage permission request failed');
